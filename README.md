@@ -8,4 +8,4 @@ Space Engineers Maintenance utility
 Don't be "that admin" anymore!
 
 
-<<Fill this in when you get home>>
+--Fill this in when you get home--
