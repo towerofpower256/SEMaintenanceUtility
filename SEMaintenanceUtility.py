@@ -77,6 +77,10 @@ v1.2.1
  - Added ship name detection with new ship naming under the Info tab
  - Updated Disable Factories to work with new SE factory node layout
  
+ v1.3.7
+ - Added function to remove Spotlights. Only standard, might not work with Steam Workshop spotlights
+ 
+ 
 """
 
 import xml.etree.ElementTree as ET #Used to read the SE save files
@@ -453,7 +457,20 @@ def SaveAsteroid(asteroidname):
 	#Do the copy
 	if not args.whatif == True:
 		shutil.copyfile(args.save_path + asteroidname, asteroidsnapshotdir + asteroidname)
-		
+
+#Function to loop through an object cluster and disable spotlights
+#Written by RottieLover 30/08/2014
+def DisableSpotLights (objectcluster):
+	#XPrint ("Checking for Spotlights")
+	#XPrint (objectcluster)
+	for object in objectcluster:
+		for block in object.find('CubeBlocks'):
+			attrib = FindAttrib(block)
+			if attrib == "MyObjectBuilder_ReflectorLight": #Is a spotlight
+				#XPrint ("Found Spotlight")
+				block.find('Enabled').text = "false" #Turn it off
+				XPrint("Turning off spotlight on entity: ", object.find('EntityId').text)
+
 #Function to do the oposite, copy the contents of the snapshot back into the current voxel file
 #Once again, fields from the filename node so will have .vox on the end
 def RestoreAsteroid(asteroidname):
@@ -492,6 +509,7 @@ argparser.add_argument('--cleanup-include-solar', '-S', help="Normally solar pan
 argparser.add_argument('--cleanup-missing-attrib', '-c', help="Removes objects that are missing cubes with the given attribute, except those that have cubes that match --cleanup-missing-subtype. A list of attributes can be found on the wiki.", nargs="*", default=[])
 argparser.add_argument('--cleanup-missing-subtype', '-C', help="Removes objects that are missing cubes with the given subtype, except those that have cubes that match --cleanup-missing-attrib. A list of subtypes can be found on the wiki.", nargs="*", default=[])
 argparser.add_argument('--remove-refinery-queue', '-Q', help="As of SE 01.043, the refinery queue self-replicates and can easily get out of control and cause serious lag. This removes the 'queue' node from refineries which doesn't seem to really do anything.", default=False, action='store_true')
+argparser.add_argument('--disable-spotlights', '-L', help="Turns off all spotlights.", default=False, action='store_true')
 
 	
 args = argparser.parse_args()
@@ -529,7 +547,7 @@ for frequent cleanups, check out the wiki on the SEMU site;
 https://sourceforge.net/projects/semaintenanceutility/
 """
 
-if (args.cleanup_unpowered == False) and (len(args.cleanup_missing_attrib) == 0) and (len(args.cleanup_missing_subtype) == 0) and (args.prune_factions == False) and (args.cleanup_items == False) and (args.prune_players == False) and (args.disable_factories == "") and (args.stop_movement == False) and (args.remove_npc_ships == False) and (args.save_asteroids == False) and (args.respawn_asteroids == False) and (args.remove_refinery_queue == False):
+if (args.cleanup_unpowered == False) and (args.disable_spotlights == False) and (len(args.cleanup_missing_attrib) == 0) and (len(args.cleanup_missing_subtype) == 0) and (args.prune_factions == False) and (args.cleanup_items == False) and (args.prune_players == False) and (args.disable_factories == "") and (args.stop_movement == False) and (args.remove_npc_ships == False) and (args.save_asteroids == False) and (args.respawn_asteroids == False) and (args.remove_refinery_queue == False):
 	print("Error: no actions given.")
 	print(simpleusagemsg)
 	input("Press the ENTER key to exit.")
@@ -702,6 +720,10 @@ while i < len(sectorobjects):
 		#Remove refinery queues
 		if args.remove_refinery_queue == True:
 			RemoveRefineryQueue(objectcluster)
+		
+		#Turn off Spotlights
+		if args.disable_spotlights == True:
+			DisableSpotLights(objectcluster)
 		
 		#Stop movement
 		if args.stop_movement == True:
